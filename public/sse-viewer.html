@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SSE Video Stream</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #1e1e1e; color: #fff; }
+    #status { padding: 10px; margin: 10px 0; background: #333; border-radius: 5px; }
+    #log { height: 400px; overflow-y: auto; background: #252526; padding: 10px; font-family: monospace; font-size: 12px; }
+    .frame { color: #4ec9b0; }
+    .iframe { color: #ce9178; font-weight: bold; }
+    .error { color: #f48771; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>🎥 SSE Video Stream Viewer (Auto-Connect)</h2>
+  <div id="status">Status: Connecting...</div>
+  <div id="log"></div>
+
+  <script>
+    let eventSource = null;
+    let frameCount = 0;
+    let iframeCount = 0;
+
+    function log(msg, className = '') {
+      const div = document.createElement('div');
+      div.className = className;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      document.getElementById('log').prepend(div);
+    }
+
+    function updateStatus(msg, color = '#4ec9b0') {
+      const status = document.getElementById('status');
+      status.textContent = `Status: ${msg}`;
+      status.style.color = color;
+    }
+
+    function startStream() {
+      const url = `/api/stream/sse?vehicleId=all&channel=1`;
+      log(`Auto-connecting to ALL IPs...`);
+      updateStatus('Connecting...', '#ffa500');
+
+      eventSource = new EventSource(url);
+
+      eventSource.onopen = () => {
+        log('✅ SSE Connected - Receiving from ALL IPs', 'iframe');
+        updateStatus('Connected', '#4ec9b0');
+        frameCount = 0;
+        iframeCount = 0;
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'connected') {
+            log('Stream ready - waiting for frames...');
+          } else if (data.type === 'frame') {
+            frameCount++;
+            if (data.isIFrame) {
+              iframeCount++;
+              log(`I-Frame #${iframeCount} | IP: ${data.vehicleId} | Ch${data.channel} | ${data.size}B`, 'iframe');
+            } else if (frameCount % 30 === 0) {
+              log(`Frame #${frameCount} | IP: ${data.vehicleId} | Ch${data.channel} | ${data.size}B`, 'frame');
+            }
+            updateStatus(`Streaming | Frames: ${frameCount} | I-Frames: ${iframeCount}`);
+          }
+        } catch (error) {
+          log(`Parse error: ${error.message}`, 'error');
+          console.error('Full parse error:', error);
+          console.error('Event data:', event.data);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        log(`❌ SSE Error: ${JSON.stringify(error)}`, 'error');
+        log(`Error details - readyState: ${eventSource?.readyState}, type: ${error.type}`, 'error');
+        console.error('SSE Error object:', error);
+        console.error('EventSource state:', eventSource);
+        updateStatus('Error - Reconnecting in 3s...', '#f48771');
+        
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        
+        setTimeout(startStream, 3000);
+      };
+    }
+
+    // Auto-start on page load
+    window.onload = () => {
+      log('Page loaded - auto-connecting...');
+      startStream();
+    };
+
+    window.onbeforeunload = () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  </script>
+</body>
+</html>

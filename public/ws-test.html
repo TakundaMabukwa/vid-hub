@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket Test</title>
+</head>
+<body>
+  <h1>WebSocket Connection Test</h1>
+  <div id="status">Testing...</div>
+  <div id="log" style="font-family: monospace; white-space: pre;"></div>
+  
+  <script>
+    const log = document.getElementById('log');
+    const status = document.getElementById('status');
+    
+    function addLog(msg) {
+      console.log(msg);
+      log.textContent += msg + '\n';
+    }
+    
+    addLog('Page loaded');
+    addLog('Protocol: ' + window.location.protocol);
+    addLog('Hostname: ' + window.location.hostname);
+    addLog('Port: ' + (window.location.port || '3000'));
+    
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || '3000';
+    const wsUrl = `${protocol}//${host}:${port}/ws/video`;
+    
+    addLog('\nAttempting connection to: ' + wsUrl);
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      status.textContent = '✅ CONNECTED';
+      status.style.color = 'green';
+      addLog('✅ WebSocket OPEN');
+      addLog('ReadyState: ' + ws.readyState);
+      
+      // Test subscribe
+      addLog('\nSending test subscribe...');
+      ws.send(JSON.stringify({
+        type: 'subscribe',
+        vehicleId: '013912345678',
+        channel: 1
+      }));
+    };
+    
+    ws.onmessage = (event) => {
+      addLog('📨 Message received: ' + event.data);
+    };
+    
+    ws.onerror = (error) => {
+      status.textContent = '❌ ERROR';
+      status.style.color = 'red';
+      addLog('❌ WebSocket ERROR');
+      addLog('Error: ' + JSON.stringify(error));
+    };
+    
+    ws.onclose = (event) => {
+      status.textContent = '❌ CLOSED';
+      status.style.color = 'red';
+      addLog('❌ WebSocket CLOSED');
+      addLog('Code: ' + event.code);
+      addLog('Reason: ' + event.reason);
+      addLog('Clean: ' + event.wasClean);
+    };
+    
+    // Check state every second
+    setInterval(() => {
+      addLog('State check - ReadyState: ' + ws.readyState + ' (0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)');
+    }, 5000);
+  </script>
+</body>
+</html>

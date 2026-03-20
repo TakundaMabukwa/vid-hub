@@ -1,0 +1,2065 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Screenshot Tester</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121b2d;
+      --muted: #7f8ba3;
+      --text: #e8eefb;
+      --ok: #2ecc71;
+      --warn: #f39c12;
+      --err: #e74c3c;
+      --accent: #3aa0ff;
+      --border: #25314a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: radial-gradient(circle at top right, #1a2540, var(--bg));
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 2fr 1fr 1fr auto auto;
+      align-items: end;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #0f1728;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      background: #16233a;
+    }
+    button.primary {
+      background: linear-gradient(180deg, #2f8fff, #1f76d8);
+      border: 1px solid #3b9cff;
+      font-weight: 600;
+    }
+
+    .status {
+      font-size: 13px;
+      margin-top: 8px;
+      color: var(--muted);
+    }
+    .status.ok { color: var(--ok); }
+    .status.warn { color: var(--warn); }
+    .status.err { color: var(--err); }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      width: auto;
+      padding: 8px 14px;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: linear-gradient(180deg, #2f8fff, #1f76d8);
+      border-color: #3b9cff;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .shot {
+      background: #0f1728;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .shot img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+      background: #0a1020;
+    }
+
+    .shot .info {
+      padding: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .alert-item {
+      background: #0f1728;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .alert-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .pill {
+      font-size: 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: var(--muted);
+    }
+    .priority-critical { color: #ff7b7b; border-color: #7b2a2a; }
+    .priority-high { color: #ffb366; border-color: #704214; }
+    .priority-medium { color: #e6d97f; border-color: #665f26; }
+    .priority-low { color: #8fd4ff; border-color: #295872; }
+    .thumbs {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .thumbs img {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #0a1020;
+    }
+    .alert-videos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .alert-video-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      background: #0a1222;
+    }
+    .alert-video-item video {
+      width: 100%;
+      height: 150px;
+      background: #000;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: block;
+      object-fit: cover;
+    }
+    .alert-video-title {
+      font-size: 12px;
+      color: #9bc1ff;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .alert-video-empty {
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 8px;
+      background: #0a1222;
+    }
+
+    @media (max-width: 900px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2 style="margin: 0 0 10px 0;">Screenshot Tester</h2>
+      <div class="row">
+        <div>
+          <label for="vehicleId">Vehicle ID</label>
+          <input id="vehicleId" placeholder="e.g. 221087868252" />
+        </div>
+        <div>
+          <label for="channel">Channel</label>
+          <input id="channel" type="number" min="1" value="1" />
+        </div>
+        <div>
+          <label for="minutes">Recent Window (minutes)</label>
+          <input id="minutes" type="number" min="1" value="30" />
+        </div>
+        <div>
+          <label for="limit">Limit</label>
+          <input id="limit" type="number" min="1" value="50" />
+        </div>
+        <div>
+          <button id="requestBtn" class="primary">Request Screenshot</button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <button id="refreshBtn">Refresh Now</button>
+        <button id="loadVehiclesBtn">Load Connected Vehicles</button>
+        <button id="requestAllBtn" class="primary">Request All Vehicles/Channels</button>
+        <button id="toggleAutoBtn">Pause Auto Refresh</button>
+        <button id="toggleAutoCaptureBtn" class="primary">Start 30s Auto Capture</button>
+      </div>
+
+      <div class="row" style="margin-top:12px; grid-template-columns: 1fr 1fr;">
+        <div>
+          <label for="alertSourceFilter">Alert Source Filter</label>
+          <select id="alertSourceFilter">
+            <option value="location">Real Location Alerts (0x0200 + 0x0704)</option>
+            <option value="0200">Only 0x0200</option>
+            <option value="0704">Only 0x0704</option>
+            <option value="all-real">All Real Alerts</option>
+          </select>
+        </div>
+        <div>
+          <label for="alertTypeFilter">Alert Type Filter</label>
+          <select id="alertTypeFilter">
+            <option value="">All Alert Types</option>
+            <option value="fatigue">Driver Fatigue</option>
+            <option value="collision">Collision Warning</option>
+            <option value="rollover">Rollover Warning</option>
+            <option value="overspeed">Overspeed</option>
+            <option value="adas">ADAS Alerts</option>
+            <option value="dms">DMS Alerts</option>
+            <option value="power">Power Failure</option>
+            <option value="movement">Illegal Vehicle Displacement</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px; grid-template-columns: 2fr 1fr auto;">
+        <div>
+          <label for="simulateSignal">Simulate Alert</label>
+          <select id="simulateSignal">
+            <option value="jtt1078_behavior_fatigue">Driver Fatigue</option>
+            <option value="jtt1078_behavior_phone_call">Phone Call While Driving</option>
+            <option value="jtt1078_behavior_smoking">Smoking While Driving</option>
+            <option value="adas_10001_forward_collision_warning">ADAS: Forward collision warning</option>
+            <option value="adas_10002_lane_departure_alarm">ADAS: Lane departure alarm</option>
+            <option value="adas_10003_following_distance_too_close">ADAS: Following distance too close</option>
+            <option value="adas_10004_pedestrian_collision_alarm">ADAS: Pedestrian collision alarm</option>
+            <option value="adas_10005_frequent_lane_change_alarm">ADAS: Frequent lane change alarm</option>
+            <option value="adas_10006_road_sign_over_limit_alarm">ADAS: Road sign over-limit alarm</option>
+            <option value="adas_10007_obstruction_alarm">ADAS: Obstruction alarm</option>
+            <option value="adas_10008_driver_assist_function_failure">ADAS: Driver assistance function failure</option>
+            <option value="adas_10016_road_sign_identification_event">ADAS: Road sign identification event</option>
+            <option value="adas_10017_active_capture_event">ADAS: Active capture event</option>
+            <option value="dms_10101_fatigue_driving_alarm">DMS: Fatigue driving alarm</option>
+            <option value="dms_10102_handheld_phone_alarm">DMS: Handheld phone alarm</option>
+            <option value="dms_10103_smoking_alarm">DMS: Smoking alarm</option>
+            <option value="dms_10104_forward_invisible_too_long">DMS: Forward camera invisible too long</option>
+            <option value="dms_10105_driver_alarm_not_detected">DMS: Driver alarm not detected</option>
+            <option value="dms_10106_hands_off_steering">DMS: Both hands off steering wheel</option>
+            <option value="dms_10107_behavior_monitoring_failure">DMS: Driver behavior monitoring failure</option>
+            <option value="dms_10116_automatic_capture_event">DMS: Automatic capture event</option>
+            <option value="dms_10117_driver_change">DMS: Driver change</option>
+            <option value="behavior_11201_rapid_acceleration">Rapid acceleration</option>
+            <option value="behavior_11202_rapid_deceleration">Rapid deceleration</option>
+            <option value="behavior_11203_sharp_turn">Sharp turn</option>
+          </select>
+        </div>
+        <div>
+          <label for="simulateChannel">Alert Channel</label>
+          <input id="simulateChannel" type="number" min="1" value="1" />
+        </div>
+        <div>
+          <label for="simulateBtn">Action</label>
+          <button id="simulateBtn" class="primary">Simulate Alert</button>
+        </div>
+      </div>
+
+      <div id="status" class="status">Ready.</div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button id="tabScreenshots" class="tab-btn active">Screenshots</button>
+        <button id="tabAlerts" class="tab-btn">Alerts</button>
+        <button id="tabVideo" class="tab-btn">Video</button>
+      </div>
+      <div class="topline">
+        <div>
+          <strong id="panelTitle">Recent Screenshots</strong>
+          <div id="summary" class="meta">No data yet.</div>
+        </div>
+        <div id="wsStatus" class="meta">WebSocket: connecting...</div>
+      </div>
+      <div id="paneScreenshots" class="tab-pane active">
+        <div id="shots" class="grid"></div>
+      </div>
+      <div id="paneAlerts" class="tab-pane">
+        <div id="alerts" class="grid"></div>
+      </div>
+      <div id="paneVideo" class="tab-pane">
+        <div class="card" style="margin:0; padding:12px;">
+          <div class="row" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;">
+            <div>
+              <label for="videoVehicleId">Vehicle ID</label>
+              <input id="videoVehicleId" placeholder="e.g. 221087868252" />
+            </div>
+            <div>
+              <label for="videoChannel">Channel</label>
+              <input id="videoChannel" type="number" min="1" value="1" />
+            </div>
+            <div>
+              <label for="videoStartTime">Start Time</label>
+              <input id="videoStartTime" type="datetime-local" step="1" />
+            </div>
+            <div>
+              <label for="videoEndTime">End Time</label>
+              <input id="videoEndTime" type="datetime-local" step="1" />
+            </div>
+            <div>
+              <label for="videoMode">Mode</label>
+              <select id="videoMode">
+                <option value="stream">Playback Stream (Recommended)</option>
+                <option value="both">Both (Stream + Download)</option>
+                <option value="download">Download Only</option>
+              </select>
+            </div>
+            <div>
+              <label for="videoRequestBtn">Action</label>
+              <button id="videoRequestBtn" class="primary">Pull Video</button>
+            </div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:8px; margin:0;">
+              <input id="videoQueryResources" type="checkbox" checked style="width:auto;" />
+              Query Resource List First (0x9205)
+            </label>
+            <button id="videoFillNowBtn">Set Last 60s</button>
+            <button id="videoSearchBtn" class="primary">Find Clips In Range</button>
+            <button id="videoLocalSearchBtn">Find Local Recordings</button>
+            <label style="display:flex; align-items:center; gap:8px; margin:0;">
+              Replay Speed
+              <select id="videoReplaySpeed" style="width:auto;">
+                <option value="1" selected>1x (Recommended)</option>
+                <option value="2">2x</option>
+              </select>
+            </label>
+            <button id="videoReplayBtn" class="primary">Replay Local Range (Live)</button>
+          </div>
+          <div id="videoResult" class="meta" style="margin-top:10px;">No request yet.</div>
+          <div id="videoJobStatus" class="meta" style="margin-top:8px;"></div>
+          <div id="videoClipList" class="meta" style="margin-top:10px;"></div>
+          <div id="videoLocalList" class="meta" style="margin-top:10px;"></div>
+          <div style="margin-top:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button id="videoRefreshJobsBtn">Refresh Saved Videos</button>
+          </div>
+          <div id="videoSavedList" class="meta" style="margin-top:8px;"></div>
+          <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="videoOpenViewerBtn">Open Full Viewer</button>
+          </div>
+          <div style="margin-top:12px;">
+            <iframe
+              id="videoPreviewFrame"
+              title="Video Preview"
+              src=""
+              style="width:100%; min-height:460px; border:1px solid var(--border); border-radius:8px; background:#0a1020;"
+            ></iframe>
+          </div>
+          <div style="margin-top:12px;">
+            <video
+              id="videoReadyPlayer"
+              controls
+              style="width:100%; max-height:420px; border:1px solid var(--border); border-radius:8px; background:#000;"
+            ></video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const vehicleIdEl = document.getElementById('vehicleId');
+    const channelEl = document.getElementById('channel');
+    const minutesEl = document.getElementById('minutes');
+    const limitEl = document.getElementById('limit');
+    const statusEl = document.getElementById('status');
+    const wsStatusEl = document.getElementById('wsStatus');
+    const summaryEl = document.getElementById('summary');
+    const panelTitleEl = document.getElementById('panelTitle');
+    const shotsEl = document.getElementById('shots');
+    const alertsEl = document.getElementById('alerts');
+    const paneScreenshotsEl = document.getElementById('paneScreenshots');
+    const paneAlertsEl = document.getElementById('paneAlerts');
+    const paneVideoEl = document.getElementById('paneVideo');
+    const tabScreenshotsEl = document.getElementById('tabScreenshots');
+    const tabAlertsEl = document.getElementById('tabAlerts');
+    const tabVideoEl = document.getElementById('tabVideo');
+    const videoVehicleIdEl = document.getElementById('videoVehicleId');
+    const videoChannelEl = document.getElementById('videoChannel');
+    const videoStartTimeEl = document.getElementById('videoStartTime');
+    const videoEndTimeEl = document.getElementById('videoEndTime');
+    const videoModeEl = document.getElementById('videoMode');
+    const videoQueryResourcesEl = document.getElementById('videoQueryResources');
+    const videoResultEl = document.getElementById('videoResult');
+    const videoPreviewFrameEl = document.getElementById('videoPreviewFrame');
+    const videoJobStatusEl = document.getElementById('videoJobStatus');
+    const videoReadyPlayerEl = document.getElementById('videoReadyPlayer');
+    const videoClipListEl = document.getElementById('videoClipList');
+    const videoSavedListEl = document.getElementById('videoSavedList');
+    const videoLocalListEl = document.getElementById('videoLocalList');
+    const videoReplaySpeedEl = document.getElementById('videoReplaySpeed');
+    const simulateSignalEl = document.getElementById('simulateSignal');
+    const simulateChannelEl = document.getElementById('simulateChannel');
+    const alertSourceFilterEl = document.getElementById('alertSourceFilter');
+    const alertTypeFilterEl = document.getElementById('alertTypeFilter');
+
+    let autoRefresh = true;
+    let refreshTimer = null;
+    let autoCapture = false;
+    let captureTimer = null;
+    let alertCheckTimer = null;
+    let activeTab = 'screenshots';
+    let recentScreenshotsCache = [];
+    let lastAlertCount = null;
+    let videoJobPollTimer = null;
+    let alertRefreshInFlight = false;
+    let autoVideoRequestsInFlight = 0;
+    let alertRefreshDebounceTimer = null;
+    let alertsWsConnected = false;
+    const alertVideoState = new Map();
+    const alertScreenshotState = new Map();
+    const alertMediaCache = new Map();
+    const liveAlertStore = new Map();
+    const AUTO_MEDIA_REQUESTS_ENABLED = false;
+    const AUTO_VIDEO_REQUEST_MAX_CONCURRENCY = 2;
+    const AUTO_VIDEO_REQUEST_MAX_PER_REFRESH = 0;
+    const ALERT_FETCH_LIMIT_DEFAULT = 40;
+    const ALERT_FETCH_LIMIT_MAX = 100;
+    const ALERT_MEDIA_HYDRATE_LIMIT_MAX = 24;
+    const ALERT_MEDIA_FETCH_CONCURRENCY = 2;
+    const ALERT_MEDIA_TTL_MS = 10000;
+    const ALERT_MEDIA_PENDING_TTL_MS = 1500;
+    const ALERT_VIDEO_RETRY_MS = 60000;
+    const ALERT_SCREENSHOT_RETRY_MS = 30000;
+    const MIN_READY_SECONDS = 3;
+
+    function normalizeAlertRecord(alert) {
+      if (!alert || typeof alert !== 'object') return null;
+      const id = String(alert.id || '').trim();
+      if (!id) return null;
+      const metadata = alert.metadata && typeof alert.metadata === 'object' ? alert.metadata : {};
+      const ts = alert.timestamp ? new Date(alert.timestamp) : null;
+      return {
+        ...alert,
+        metadata,
+        id,
+        vehicleId: alert.vehicleId || alert.device_id || 'n/a',
+        timestamp: ts && !Number.isNaN(ts.getTime()) ? ts.toISOString() : new Date(0).toISOString()
+      };
+    }
+
+    function isRealAlert(alert) {
+      const metadata = alert?.metadata || {};
+      return !metadata?.simulated;
+    }
+
+    function matchesSourceFilter(alert) {
+      if (!isRealAlert(alert)) return false;
+      const source = String(alert?.metadata?.sourceMessageId || '').trim().toLowerCase();
+      const filter = String(alertSourceFilterEl?.value || 'location').trim().toLowerCase();
+
+      if (filter === 'all-real') return true;
+      if (filter === '0200') return source === '0x0200';
+      if (filter === '0704') return source === '0x0704';
+
+      return source === '0x0200' || source === '0x0704';
+    }
+
+    function matchesAlertTypeFilter(alert) {
+      const filter = String(alertTypeFilterEl?.value || '').trim().toLowerCase();
+      if (!filter) return true;
+
+      const type = String(alert?.type || '').toLowerCase();
+      const signals = Array.isArray(alert?.metadata?.alertSignals)
+        ? alert.metadata.alertSignals.map((s) => String(s || '').toLowerCase())
+        : [];
+      const haystack = [type, ...signals].join(' ');
+
+      switch (filter) {
+        case 'fatigue':
+          return haystack.includes('fatigue');
+        case 'collision':
+          return haystack.includes('collision');
+        case 'rollover':
+          return haystack.includes('rollover');
+        case 'overspeed':
+          return haystack.includes('overspeed');
+        case 'adas':
+          return haystack.includes('adas_');
+        case 'dms':
+          return haystack.includes('dms_');
+        case 'power':
+          return haystack.includes('power failure') || haystack.includes('jt808_alarm_bit_8');
+        case 'movement':
+          return haystack.includes('illegal vehicle displacement') || haystack.includes('jt808_alarm_bit_28');
+        default:
+          return true;
+      }
+    }
+
+    function upsertLiveAlert(alert) {
+      const normalized = normalizeAlertRecord(alert);
+      if (!normalized) return false;
+      const existing = liveAlertStore.get(normalized.id);
+      liveAlertStore.set(normalized.id, existing ? { ...existing, ...normalized } : normalized);
+      return true;
+    }
+
+    function replaceLiveAlertStore(alerts) {
+      liveAlertStore.clear();
+      if (!Array.isArray(alerts)) return;
+      for (const a of alerts) upsertLiveAlert(a);
+    }
+
+    function mergeLiveAlertStore(alerts) {
+      if (!Array.isArray(alerts)) return;
+      for (const a of alerts) upsertLiveAlert(a);
+    }
+
+    function getLiveAlerts(limit, minutes, vehicleIdFilter = '') {
+      const vehicleFilter = String(vehicleIdFilter || '').trim();
+      const maxAgeMs = Math.max(1, Number(minutes || 180)) * 60 * 1000;
+      const cutoff = Date.now() - maxAgeMs;
+      const list = Array.from(liveAlertStore.values())
+        .filter((a) => {
+          if (!matchesSourceFilter(a)) return false;
+          if (!matchesAlertTypeFilter(a)) return false;
+          const t = new Date(a?.timestamp || 0).getTime();
+          if (!Number.isFinite(t) || t < cutoff) return false;
+          if (!vehicleFilter) return true;
+          const id = String(a?.vehicleId || a?.device_id || '').trim();
+          return id === vehicleFilter;
+        })
+        .sort((a, b) => new Date(b?.timestamp || 0).getTime() - new Date(a?.timestamp || 0).getTime())
+        .slice(0, limit);
+      return list;
+    }
+
+    function scheduleAlertsRefresh(delayMs = 200) {
+      if (alertRefreshDebounceTimer) clearTimeout(alertRefreshDebounceTimer);
+      alertRefreshDebounceTimer = setTimeout(() => {
+        alertRefreshDebounceTimer = null;
+        if (activeTab === 'alerts') {
+          refreshAlerts();
+        }
+      }, delayMs);
+    }
+
+    function setStatus(text, kind = 'status') {
+      statusEl.className = 'status ' + kind;
+      statusEl.textContent = text;
+    }
+
+    function toLocalDatetimeValue(date) {
+      const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return d.toISOString().slice(0, 19);
+    }
+
+    function setDefaultVideoWindow() {
+      const end = new Date();
+      const start = new Date(end.getTime() - 60 * 1000);
+      videoStartTimeEl.value = toLocalDatetimeValue(start);
+      videoEndTimeEl.value = toLocalDatetimeValue(end);
+    }
+
+    async function loadVehicles() {
+      try {
+        const res = await fetch('/api/vehicles/connected');
+        if (!res.ok) throw new Error('Failed to fetch vehicles');
+        const vehicles = await res.json();
+        if (Array.isArray(vehicles) && vehicles.length > 0) {
+          vehicleIdEl.value = vehicles[0].id;
+          videoVehicleIdEl.value = vehicles[0].id;
+          setStatus(`Loaded ${vehicles.length} connected vehicle(s). Using ${vehicles[0].id}.`, 'ok');
+        } else {
+          setStatus('No connected vehicles found.', 'warn');
+        }
+      } catch (err) {
+        setStatus(`Vehicle load error: ${err.message}`, 'err');
+      }
+    }
+
+    function card(item) {
+      const url = item.storage_url && item.storage_url !== 'upload-failed' && item.storage_url !== 'local-only'
+        ? item.storage_url
+        : '';
+
+      const ts = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'n/a';
+      const fileSizeKb = item.file_size ? (item.file_size / 1024).toFixed(1) : 'n/a';
+
+      return `
+        <div class="shot">
+          ${url ? `<img src="${url}" alt="screenshot ${item.id}" loading="lazy" />` : `<img alt="missing image URL" />`}
+          <div class="info">
+            <div><strong>Device:</strong> ${item.device_id || 'n/a'} | <strong>Ch:</strong> ${item.channel ?? 'n/a'}</div>
+            <div><strong>Time:</strong> ${ts}</div>
+            <div><strong>Size:</strong> ${fileSizeKb} KB</div>
+            <div><strong>Alert:</strong> ${item.alert_id || 'none'}</div>
+            <div><strong>ID:</strong> ${item.id}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function extractVideoChannels(vehicle, preferredChannel) {
+      const fromCapabilities = Array.isArray(vehicle?.channels)
+        ? vehicle.channels
+            .filter(ch => ch.type === 'video' || ch.type === 'audio_video')
+            .map(ch => Number(ch.logicalChannel))
+            .filter(ch => Number.isFinite(ch) && ch > 0)
+        : [];
+      const fromActiveStreams = Array.isArray(vehicle?.activeStreams)
+        ? vehicle.activeStreams
+            .map(ch => Number(ch))
+            .filter(ch => Number.isFinite(ch) && ch > 0)
+        : [];
+      const preferred = Number(preferredChannel);
+      const all = [
+        ...fromCapabilities,
+        ...fromActiveStreams,
+        ...(Number.isFinite(preferred) && preferred > 0 ? [preferred] : []),
+        1,
+        2
+      ];
+      return [...new Set(all)].sort((a, b) => a - b);
+    }
+
+    function getAlertVideoInfo(alert, videosInfo) {
+      const alertId = String(alert?.id || '').trim();
+      const metadataClips = alert?.metadata?.videoClips || {};
+      const apiVideos = videosInfo?.videos || {};
+
+      const preDuration = Number(apiVideos?.pre_event?.duration ?? metadataClips?.preDuration ?? 0);
+      const postDuration = Number(apiVideos?.post_event?.duration ?? metadataClips?.postDuration ?? 0);
+      const prePath = apiVideos?.pre_event?.path || metadataClips?.pre || metadataClips?.preStorageUrl || '';
+      const postPath = apiVideos?.post_event?.path || metadataClips?.post || metadataClips?.postStorageUrl || '';
+      const cameraPath =
+        apiVideos?.camera_sd?.path ||
+        metadataClips?.cameraVideo ||
+        metadataClips?.cameraVideoLocalPath ||
+        metadataClips?.cameraPreVideo ||
+        metadataClips?.cameraPostVideo ||
+        '';
+
+      const preReady = !!(videosInfo?.has_pre_event || (prePath && preDuration >= MIN_READY_SECONDS));
+      const postReady = !!(videosInfo?.has_post_event || (postPath && postDuration >= MIN_READY_SECONDS));
+      const cameraReady = !!(videosInfo?.has_camera_video || cameraPath);
+
+      const preUrl = `/api/alerts/${encodeURIComponent(alertId)}/video/pre`;
+      const postUrl = `/api/alerts/${encodeURIComponent(alertId)}/video/post`;
+      const cameraUrl = `/api/alerts/${encodeURIComponent(alertId)}/video/camera`;
+
+      return {
+        preReady,
+        postReady,
+        cameraReady,
+        preUrl,
+        postUrl,
+        cameraUrl,
+        preDuration,
+        postDuration,
+        dbRecords: Array.isArray(apiVideos?.database_records) ? apiVideos.database_records : []
+      };
+    }
+
+    function formatEnsureInfo(ensure) {
+      if (!ensure || typeof ensure !== 'object') return 'n/a';
+      const channels = Array.isArray(ensure.channels) ? ensure.channels.join(', ') : 'n/a';
+      const started = ensure.started ? 'yes' : 'no';
+      const scheduled = ensure.videoScheduled ? 'yes' : 'no';
+      const reason = ensure.reason ? ` | reason: ${ensure.reason}` : '';
+      return `started: ${started} | videoScheduled: ${scheduled} | channels: ${channels}${reason}`;
+    }
+
+    function isAlertMediaReady(alert, media) {
+      const screenshots = Array.isArray(media?.screenshots) ? media.screenshots : [];
+      const info = getAlertVideoInfo(alert, media?.videosInfo || null);
+      const hasVideo = info.preReady || info.postReady || info.cameraReady;
+      return screenshots.length > 0 && hasVideo;
+    }
+
+    function buildAlertVideoTile(label, url, durationSec) {
+      const durationText = Number.isFinite(Number(durationSec)) && Number(durationSec) > 0
+        ? ` | ${Number(durationSec).toFixed(1)}s`
+        : '';
+      return `
+        <div class="alert-video-item">
+          <div class="alert-video-title">${label}${durationText}</div>
+          <video controls preload="auto" playsinline muted autoplay src="${url}"></video>
+          <div class="meta" style="margin-top:6px;">
+            <a href="${url}" target="_blank" rel="noopener" class="meta">Open</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function alertCard(alert, screenshots, videosInfo, extra = {}) {
+      const ts = alert.timestamp ? new Date(alert.timestamp).toLocaleString() : 'n/a';
+      const pr = (alert.priority || 'low').toLowerCase();
+      const imgs = (screenshots || [])
+        .slice()
+        .sort((a, b) => {
+          const ac = Number(a?.channel || 0);
+          const bc = Number(b?.channel || 0);
+          if (ac !== bc) return ac - bc;
+          return new Date(b?.timestamp || 0).getTime() - new Date(a?.timestamp || 0).getTime();
+        })
+        .slice(0, 12)
+        .map((s) => {
+        const url = s.storage_url && s.storage_url !== 'upload-failed' && s.storage_url !== 'local-only' ? s.storage_url : '';
+        const ch = Number(s?.channel || 0);
+        return url
+          ? `<div style="position:relative;">
+               <img src="${url}" alt="${s.id}" loading="lazy" />
+               <span style="position:absolute; left:4px; top:4px; font-size:10px; padding:1px 6px; border-radius:999px; background:#0b1220cc; border:1px solid var(--border); color:#9bc1ff;">Ch ${ch || '?'}</span>
+             </div>`
+          : '';
+      }).join('');
+      const videoInfo = getAlertVideoInfo(alert, videosInfo);
+      const videoTiles = [];
+      if (videoInfo.preReady) {
+        videoTiles.push(buildAlertVideoTile('Pre-incident (30s before)', videoInfo.preUrl, videoInfo.preDuration));
+      }
+      if (videoInfo.postReady) {
+        videoTiles.push(buildAlertVideoTile('Post-incident (30s after)', videoInfo.postUrl, videoInfo.postDuration));
+      }
+      if (videoInfo.cameraReady) {
+        videoTiles.push(buildAlertVideoTile('Camera SD clip', videoInfo.cameraUrl));
+      }
+
+      const videoCount =
+        (videoInfo.preReady ? 1 : 0) +
+        (videoInfo.postReady ? 1 : 0) +
+        (videoInfo.cameraReady ? 1 : 0) +
+        videoInfo.dbRecords.length;
+      const state = alertVideoState.get(String(alert.id));
+      const stateHtml = state
+        ? `<div class="meta" style="margin-top:6px; color:#9bc1ff;">
+             Video auto-request: ${state.autoRequested ? 'yes' : 'no'}${state.requestStartedAt ? ` | started: ${new Date(state.requestStartedAt).toLocaleTimeString()}` : ''}<br/>
+             Query: ${state.querySent ? 'yes' : 'no'} | Stream: ${state.requestSent ? 'yes' : 'no'} | Download: ${state.downloadRequestSent ? 'yes' : 'no'}<br/>
+             Job: ${state.jobId || 'n/a'} | Status: ${state.jobStatus || 'n/a'}${state.error ? ` | Error: ${state.error}` : ''}
+           </div>`
+        : '<div class="meta" style="margin-top:6px;">Video auto-request: pending check</div>';
+      const hasAnyVideo = videoTiles.length > 0;
+      const signalDetails = Array.isArray(alert?.metadata?.alertSignalDetails) ? alert.metadata.alertSignalDetails : [];
+      const signalCodes = signalDetails.map((s) => s?.code).filter(Boolean).join(', ');
+      const screenshotChannels = Array.from(new Set((screenshots || []).map((s) => Number(s?.channel || 0)).filter((n) => n > 0))).sort((a, b) => a - b);
+      const ensureInfoText = formatEnsureInfo(extra.ensure);
+      const decodeText = [
+        `sourceMessageId: ${alert?.metadata?.sourceMessageId || 'n/a'}`,
+        `vendorCodeMapped: ${alert?.metadata?.vendorCodeMapped ? 'yes' : 'no'}`,
+        `alarmCode: ${alert?.metadata?.alarmCode ?? 'n/a'}`,
+        `signals: ${signalCodes || 'n/a'}`
+      ].join(' | ');
+
+      return `
+        <div class="alert-item">
+          <div class="alert-head">
+            <div>
+              <div><strong>${alert.alert_type || alert.type || 'Alert'}</strong></div>
+              <div class="meta">${alert.id}</div>
+            </div>
+            <div class="pill priority-${pr}">${pr}</div>
+          </div>
+          <div class="meta">Vehicle: ${alert.device_id || alert.vehicleId || 'n/a'} | Channel: ${alert.channel ?? 'n/a'}</div>
+          <div class="meta">Time: ${ts}</div>
+          <div class="meta">Status: ${alert.status || 'n/a'}</div>
+          <div class="meta">Screenshots: ${(screenshots || []).length}</div>
+          <div class="meta">Screenshot channels: ${screenshotChannels.length ? screenshotChannels.join(', ') : 'none'}</div>
+          <div class="thumbs">${imgs || '<div class="meta">No screenshots linked yet.</div>'}</div>
+          <div class="meta" style="margin-top:8px;">Videos: ${videoCount}</div>
+          <div class="alert-videos">
+            ${videoTiles.join('')}
+          </div>
+          ${hasAnyVideo ? '' : '<div class="alert-video-empty">No ready video yet. System is auto-requesting camera playback for missing clips.</div>'}
+          <div class="meta" style="margin-top:8px;">Ensure: ${ensureInfoText}</div>
+          <div class="meta" style="margin-top:4px;">Decoded: ${decodeText}</div>
+          ${stateHtml}
+          <div class="meta" style="margin-top:8px;">
+            <a href="/api/alerts/${encodeURIComponent(String(alert.id))}/media?ensureMedia=true" target="_blank" rel="noopener">Open alert media JSON</a>
+          </div>
+        </div>
+      `;
+    }
+
+    async function requestAlertReportVideo(alertId) {
+      try {
+        setStatus(`Requesting camera report video for alert ${alertId}...`);
+        const res = await fetch(`/api/alerts/${encodeURIComponent(alertId)}/request-report-video`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lookbackSeconds: 30,
+            forwardSeconds: 0,
+            queryResources: true
+          })
+        });
+        const body = await res.json().catch(() => ({}));
+        const d = body.data || {};
+        const hasLiveFallback = d?.playbackSource === 'live_fallback' && !!d.streamUrl;
+
+        if (body.success === false || !res.ok) {
+          if (!hasLiveFallback) {
+            throw new Error(body.message || `HTTP ${res.status}`);
+          }
+        }
+
+        const prev = alertVideoState.get(String(alertId)) || {};
+        alertVideoState.set(String(alertId), {
+          ...prev,
+          querySent: !!d.querySent,
+          requestSent: !!d.requestSent,
+          downloadRequestSent: !!d.downloadRequestSent,
+          jobId: d.playbackJobId || null,
+          jobStatus: d.playbackJobId ? 'queued' : 'none',
+          error: ''
+        });
+        const start = body?.data?.startTime ? new Date(body.data.startTime).toLocaleString() : 'n/a';
+        const end = body?.data?.endTime ? new Date(body.data.endTime).toLocaleString() : 'n/a';
+        if (hasLiveFallback) {
+          setStatus(`Live stream fallback started. Window: ${start} -> ${end}`, 'ok');
+          if (d.streamUrl) {
+            videoReadyPlayerEl.src = d.streamUrl;
+            videoReadyPlayerEl.load();
+            videoReadyPlayerEl.play().catch(() => {});
+            videoJobStatusEl.textContent = 'Video source: live stream';
+          } else {
+            videoJobStatusEl.textContent = 'Live stream requested, but stream URL is missing.';
+          }
+        } else {
+          setStatus(`Video request sent. Window: ${start} -> ${end}`, 'ok');
+        }
+
+        if (d.playbackJobId) {
+          videoJobStatusEl.textContent = `Job ${d.playbackJobId}: queued`;
+          pollVideoJob(d.playbackJobId);
+          refreshVideoJobs();
+          pollAlertVideoJob(alertId, d.playbackJobId);
+        }
+        setTimeout(refreshAlerts, 1500);
+      } catch (err) {
+        const prev = alertVideoState.get(String(alertId)) || {};
+        alertVideoState.set(String(alertId), {
+          ...prev,
+          error: err.message || String(err)
+        });
+        setStatus(`Video request failed: ${err.message}`, 'err');
+      }
+    }
+
+    async function pollAlertVideoJob(alertId, jobId) {
+      if (!jobId) return;
+      const check = async () => {
+        const res = await fetch(`/api/videos/jobs/${encodeURIComponent(jobId)}`);
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) return false;
+        const j = body.data || {};
+        const prev = alertVideoState.get(String(alertId)) || {};
+        alertVideoState.set(String(alertId), {
+          ...prev,
+          jobId,
+          jobStatus: j.status || 'unknown',
+          error: j.error || ''
+        });
+        return j.status === 'completed' || j.status === 'failed';
+      };
+
+      try {
+        let done = await check();
+        let retries = 0;
+        while (!done && retries < 120) {
+          await new Promise((r) => setTimeout(r, 2000));
+          done = await check();
+          retries++;
+        }
+      } catch (_) {
+        // Keep silent; alert state remains visible from last success.
+      } finally {
+        refreshAlerts();
+      }
+    }
+
+    async function ensureAlertVideoRequested(alert, videosInfo) {
+      const alertId = String(alert?.id || '').trim();
+      if (!alertId) return false;
+
+      const videoInfo = getAlertVideoInfo(alert, videosInfo);
+      if (videoInfo.preReady && videoInfo.postReady) return false;
+
+      const existing = alertVideoState.get(alertId) || {};
+      if (existing.autoRequesting) return false;
+      if (existing.autoRequested && !existing.error) {
+        const startedMs = existing.requestStartedAt ? new Date(existing.requestStartedAt).getTime() : 0;
+        if (startedMs && (Date.now() - startedMs) < ALERT_VIDEO_RETRY_MS) return false;
+      }
+      if (existing.autoRequested && existing.error) {
+        const startedMs = existing.requestStartedAt ? new Date(existing.requestStartedAt).getTime() : 0;
+        const cooldownMs = 2 * 60 * 1000;
+        if (startedMs && (Date.now() - startedMs) < cooldownMs) return false;
+      }
+      if (autoVideoRequestsInFlight >= AUTO_VIDEO_REQUEST_MAX_CONCURRENCY) return false;
+
+      autoVideoRequestsInFlight += 1;
+      alertVideoState.set(alertId, {
+        ...existing,
+        autoRequested: true,
+        autoRequesting: true,
+        requestStartedAt: new Date().toISOString(),
+        error: ''
+      });
+
+      try {
+        const res = await fetch(`/api/alerts/${encodeURIComponent(alertId)}/collect-evidence`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ensureScreenshots: true,
+            ensureVideo: true
+          })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+
+        const d = body?.data?.ensure || {};
+        alertVideoState.set(alertId, {
+          ...existing,
+          autoRequested: true,
+          autoRequesting: false,
+          requestStartedAt: new Date().toISOString(),
+          querySent: !!d.started,
+          requestSent: !!d.videoScheduled,
+          downloadRequestSent: false,
+          jobId: null,
+          jobStatus: d.started ? 'requested' : 'none',
+          error: ''
+        });
+        return true;
+      } catch (err) {
+        alertVideoState.set(alertId, {
+          ...existing,
+          autoRequested: true,
+          autoRequesting: false,
+          requestStartedAt: new Date().toISOString(),
+          error: err?.message || String(err)
+        });
+        return false;
+      } finally {
+        autoVideoRequestsInFlight = Math.max(0, autoVideoRequestsInFlight - 1);
+      }
+    }
+
+    async function ensureAlertScreenshotRequested(alert, screenshots) {
+      const alertId = String(alert?.id || '').trim();
+      if (!alertId) return false;
+      const screenshotChannels = Array.from(new Set((screenshots || []).map((s) => Number(s?.channel || 0)).filter((n) => n > 0)));
+      if (screenshotChannels.length >= 2) return false;
+
+      const existing = alertScreenshotState.get(alertId) || {};
+      const startedMs = existing.requestStartedAt ? new Date(existing.requestStartedAt).getTime() : 0;
+      if (startedMs && (Date.now() - startedMs) < ALERT_SCREENSHOT_RETRY_MS) return false;
+
+      alertScreenshotState.set(alertId, {
+        requestStartedAt: new Date().toISOString(),
+        error: ''
+      });
+
+      try {
+        const res = await fetch(`/api/alerts/${encodeURIComponent(alertId)}/collect-evidence`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ensureScreenshots: true,
+            ensureVideo: false
+          })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+        return true;
+      } catch (err) {
+        alertScreenshotState.set(alertId, {
+          requestStartedAt: new Date().toISOString(),
+          error: err?.message || String(err)
+        });
+        return false;
+      }
+    }
+
+    async function requestVideoByRange() {
+      const vehicleId = (videoVehicleIdEl.value || vehicleIdEl.value || '').trim();
+      const channel = Number(videoChannelEl.value || 1);
+      const startLocal = videoStartTimeEl.value;
+      const endLocal = videoEndTimeEl.value;
+      const mode = videoModeEl.value || 'both';
+      const queryResources = !!videoQueryResourcesEl.checked;
+
+      if (!vehicleId) {
+        setStatus('Vehicle ID is required for video request.', 'warn');
+        return;
+      }
+      if (!startLocal || !endLocal) {
+        setStatus('Start and End time are required for video request.', 'warn');
+        return;
+      }
+
+      const start = new Date(startLocal);
+      const end = new Date(endLocal);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+        setStatus('Invalid video time range.', 'warn');
+        return;
+      }
+
+      setStatus(`Requesting video for ${vehicleId} ch${channel}...`);
+      videoResultEl.textContent = 'Submitting request...';
+
+      try {
+        const res = await fetch(`/api/vehicles/${encodeURIComponent(vehicleId)}/request-video`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel,
+            startTime: start.toISOString(),
+            endTime: end.toISOString(),
+            mode,
+            queryResources
+          })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+
+        const d = body.data || {};
+        const warnings = Array.isArray(d.warnings) ? d.warnings : [];
+        videoResultEl.innerHTML = `
+          <strong>Request Sent</strong><br/>
+          Vehicle: ${d.vehicleId} | Channel: ${d.channel} | Mode: ${d.mode}<br/>
+          Window: ${new Date(d.startTime).toLocaleString()} -> ${new Date(d.endTime).toLocaleString()}<br/>
+          Query Sent: ${d.querySent ? 'Yes' : 'No'} | Stream Sent: ${d.streamRequestSent ? 'Yes' : 'No'} | Download Sent: ${d.downloadRequestSent ? 'Yes' : 'No'}<br/>
+          <span class="meta">Download is expected to be "No" when mode is stream-only.</span>
+          ${warnings.length ? `<br/><span style="color:#f39c12;">${warnings.join(' | ')}</span>` : ''}
+        `;
+        setStatus(body.message || 'Video request submitted.', 'ok');
+        videoReadyPlayerEl.removeAttribute('src');
+        videoReadyPlayerEl.load();
+
+        if (d.streamRequestSent) {
+          const previewUrl = `/live-stream.html?vehicleId=${encodeURIComponent(vehicleId)}&channel=${encodeURIComponent(channel)}&autostart=1&embedded=1`;
+          videoPreviewFrameEl.src = previewUrl;
+        }
+
+        if (d.playbackJobId) {
+          pollVideoJob(d.playbackJobId);
+        } else {
+          videoJobStatusEl.textContent = 'No capture job started.';
+        }
+      } catch (err) {
+        videoResultEl.textContent = `Request failed: ${err.message}`;
+        setStatus(`Video request failed: ${err.message}`, 'err');
+        videoJobStatusEl.textContent = '';
+      }
+    }
+
+    async function pollVideoJob(jobId) {
+      if (videoJobPollTimer) {
+        clearInterval(videoJobPollTimer);
+        videoJobPollTimer = null;
+      }
+
+      const check = async () => {
+        try {
+          const res = await fetch(`/api/videos/jobs/${encodeURIComponent(jobId)}`);
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok || !body.success) {
+            videoJobStatusEl.textContent = `Job ${jobId}: status fetch failed`;
+            return;
+          }
+          const j = body.data || {};
+          videoJobStatusEl.textContent = `Job ${jobId}: ${j.status || 'unknown'}`;
+
+          if (j.status === 'completed') {
+            if (videoJobPollTimer) {
+              clearInterval(videoJobPollTimer);
+              videoJobPollTimer = null;
+            }
+            const fileUrl = j.outputUrl || `/api/videos/jobs/${encodeURIComponent(jobId)}/file`;
+            videoReadyPlayerEl.src = fileUrl;
+            videoReadyPlayerEl.load();
+            refreshVideoJobs();
+            setStatus(`Video ready: ${jobId}`, 'ok');
+          } else if (j.status === 'failed') {
+            if (videoJobPollTimer) {
+              clearInterval(videoJobPollTimer);
+              videoJobPollTimer = null;
+            }
+            const err = j.error ? ` (${j.error})` : '';
+            refreshVideoJobs();
+            setStatus(`Video capture failed${err}`, 'err');
+          }
+        } catch (err) {
+          videoJobStatusEl.textContent = `Job ${jobId}: polling error`;
+        }
+      };
+
+      await check();
+      videoJobPollTimer = setInterval(check, 2000);
+    }
+
+    function renderSavedJobs(jobs) {
+      if (!Array.isArray(jobs) || jobs.length === 0) {
+        videoSavedListEl.innerHTML = '<span>No saved video jobs found yet.</span>';
+        return;
+      }
+
+      const rows = jobs.slice(0, 20).map((j) => {
+        const canPlay = j.status === 'completed' && j.outputUrl && j.fileReady;
+        const actionLabel = canPlay
+          ? 'Play Saved Video'
+          : (j.status === 'failed' ? 'View Error' : (j.status === 'completed' ? 'Not Ready' : 'Track Job'));
+        const label = `${j.vehicleId} ch${j.channel}`;
+        const windowText = `${new Date(j.startTime).toLocaleString()} -> ${new Date(j.endTime).toLocaleString()}`;
+        return `
+          <div style="border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px; background:#0f1728;">
+            <div><strong>${label}</strong> | ${windowText}</div>
+            <div class="meta">Job ${j.id} | Status: ${j.status} | File: ${j.fileReady ? 'ready' : 'pending'} | Created: ${new Date(j.createdAt).toLocaleString()}</div>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button
+                data-play-job="${j.id}"
+                data-job-status="${j.status}"
+                data-job-url="${canPlay ? j.outputUrl : ''}"
+                style="width:auto; padding:6px 10px;"
+              >${actionLabel}</button>
+              ${canPlay ? `<a href="${j.outputUrl}" target="_blank" rel="noopener" style="color:#6aa6ff;">Download</a>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      videoSavedListEl.innerHTML = rows;
+    }
+
+    async function refreshVideoJobs() {
+      const vehicleId = (videoVehicleIdEl.value || vehicleIdEl.value || '').trim();
+      const channel = Number(videoChannelEl.value || 1);
+      videoSavedListEl.textContent = 'Loading saved videos...';
+      try {
+        const qs = new URLSearchParams();
+        if (vehicleId) qs.set('vehicleId', vehicleId);
+        if (channel > 0) qs.set('channel', String(channel));
+        const url = `/api/videos/jobs${qs.toString() ? `?${qs.toString()}` : ''}`;
+        const res = await fetch(url);
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+        renderSavedJobs(body?.data?.jobs || []);
+      } catch (err) {
+        videoSavedListEl.textContent = `Saved video list failed: ${err.message}`;
+      }
+    }
+
+    function renderClipList(clips) {
+      if (!Array.isArray(clips) || clips.length === 0) {
+        videoClipListEl.innerHTML = '<span>No clips found in selected range.</span>';
+        return;
+      }
+      const rows = clips.map((c) => {
+        const sizeMb = c.fileSize ? (Number(c.fileSize) / (1024 * 1024)).toFixed(2) : '0.00';
+        return `
+          <div style="border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px; background:#0f1728;">
+            <div><strong>Channel ${c.channel}</strong> | ${c.startTime} → ${c.endTime}</div>
+            <div class="meta">Size: ${sizeMb} MB | Alarm: ${c.alarmType} | Stream: ${c.streamType} | Storage: ${c.storageType}</div>
+            <div style="margin-top:8px;">
+              <button
+                data-stream-clip="1"
+                data-clip-start="${c.startTime}"
+                data-clip-end="${c.endTime}"
+                data-clip-channel="${c.channel}"
+                class="primary"
+                style="width:auto; padding:6px 10px;"
+              >Stream This Clip</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      videoClipListEl.innerHTML = rows;
+    }
+
+    function renderLocalVideoList(videos) {
+      if (!Array.isArray(videos) || videos.length === 0) {
+        videoLocalListEl.innerHTML = '<span>No local recordings found in selected range.</span>';
+        return;
+      }
+      const rows = videos.map((v) => {
+        const sizeMb = v.file_size ? (Number(v.file_size) / (1024 * 1024)).toFixed(2) : '0.00';
+        const startText = v.start_time ? new Date(v.start_time).toLocaleString() : 'n/a';
+        const endText = v.end_time ? new Date(v.end_time).toLocaleString() : 'n/a';
+        const url = v.url || '';
+        const ready = !!v.playable_ready;
+        const exists = !!v.source_exists;
+        const isOpen = !v.end_time;
+        const label = `${v.device_id || 'vehicle'} ch${v.channel || 1}`;
+        const statusText = !exists
+          ? 'missing on disk'
+          : isOpen
+            ? 'recording in progress'
+            : ready
+              ? 'ready'
+              : 'preparing mp4';
+        return `
+          <div style="border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px; background:#0f1728;">
+            <div><strong>${label}</strong> | ${startText} → ${endText}</div>
+            <div class="meta">Type: ${v.video_type || 'live'} | Size: ${sizeMb} MB | ID: ${v.id} | Status: ${statusText}</div>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+              ${ready ? `
+                <button
+                  data-play-local="${v.id}"
+                  data-local-url="${url}"
+                  style="width:auto; padding:6px 10px;"
+                >Play Local Video</button>
+                ${url ? `<a href="${url}" target="_blank" rel="noopener" style="color:#6aa6ff;">Open</a>` : ''}
+              ` : `
+                <button
+                  data-prepare-local="${v.id}"
+                  style="width:auto; padding:6px 10px;"
+                >Prepare MP4</button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+      videoLocalListEl.innerHTML = rows;
+    }
+
+    async function searchVideoClips() {
+      const vehicleId = (videoVehicleIdEl.value || vehicleIdEl.value || '').trim();
+      const channel = Number(videoChannelEl.value || 1);
+      const startLocal = videoStartTimeEl.value;
+      const endLocal = videoEndTimeEl.value;
+      if (!vehicleId || !startLocal || !endLocal) {
+        setStatus('Vehicle and time range are required to find clips.', 'warn');
+        return;
+      }
+
+      const start = new Date(startLocal);
+      const end = new Date(endLocal);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+        setStatus('Invalid clip search time range.', 'warn');
+        return;
+      }
+
+      videoClipListEl.textContent = 'Searching clips...';
+      try {
+        const res = await fetch(`/api/vehicles/${encodeURIComponent(vehicleId)}/videos/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel,
+            startTime: start.toISOString(),
+            endTime: end.toISOString()
+          })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+        const clips = body?.data?.clips || [];
+        setStatus(body.message || `Found ${clips.length} clips`, 'ok');
+        renderClipList(clips);
+      } catch (err) {
+        videoClipListEl.textContent = `Clip search failed: ${err.message}`;
+        setStatus(`Clip search failed: ${err.message}`, 'err');
+      }
+    }
+
+    async function searchLocalVideos() {
+      const vehicleId = (videoVehicleIdEl.value || vehicleIdEl.value || '').trim();
+      const channel = Number(videoChannelEl.value || 0);
+      const startLocal = videoStartTimeEl.value;
+      const endLocal = videoEndTimeEl.value;
+      if (!vehicleId || !startLocal || !endLocal) {
+        setStatus('Vehicle and time range are required to find local recordings.', 'warn');
+        return;
+      }
+
+      const start = new Date(startLocal);
+      const end = new Date(endLocal);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+        setStatus('Invalid local video time range.', 'warn');
+        return;
+      }
+
+      videoLocalListEl.textContent = 'Searching local recordings...';
+      try {
+        const res = await fetch(`/api/vehicles/${encodeURIComponent(vehicleId)}/videos/local`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel,
+            startTime: start.toISOString(),
+            endTime: end.toISOString()
+          })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+        const videos = body?.data?.videos || [];
+        setStatus(body.message || `Found ${videos.length} local recordings`, 'ok');
+        renderLocalVideoList(videos);
+      } catch (err) {
+        videoLocalListEl.textContent = `Local search failed: ${err.message}`;
+        setStatus(`Local search failed: ${err.message}`, 'err');
+      }
+    }
+
+    async function replayLocalRange() {
+      const vehicleId = (videoVehicleIdEl.value || vehicleIdEl.value || '').trim();
+      const channel = Number(videoChannelEl.value || 1);
+      const startLocal = videoStartTimeEl.value;
+      const endLocal = videoEndTimeEl.value;
+      const speed = Number(videoReplaySpeedEl.value || 1) || 1;
+      if (!vehicleId || !startLocal || !endLocal) {
+        setStatus('Vehicle and time range are required to replay.', 'warn');
+        return;
+      }
+
+      const start = new Date(startLocal);
+      const end = new Date(endLocal);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+        setStatus('Invalid replay time range.', 'warn');
+        return;
+      }
+
+      setStatus('Starting replay stream...', 'ok');
+      try {
+        const res = await fetch(`/api/vehicles/${encodeURIComponent(vehicleId)}/replay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel,
+            startTime: start.toISOString(),
+            endTime: end.toISOString(),
+            speed
+          })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+        const d = body.data || {};
+        videoResultEl.innerHTML = `
+          <strong>Replay Started</strong><br/>
+          Replay ID: ${d.replayId}<br/>
+          Vehicle: ${d.vehicleId} | Channel: ${d.channel} | Speed: ${d.speed}x<br/>
+          Window: ${new Date(d.startTime).toLocaleString()} -> ${new Date(d.endTime).toLocaleString()}
+        `;
+        const previewUrl = `/live-stream.html?vehicleId=${encodeURIComponent(vehicleId)}&channel=${encodeURIComponent(channel)}&autostart=1&embedded=1&replay=1`;
+        videoPreviewFrameEl.src = previewUrl;
+        setStatus('Replay running in live viewer.', 'ok');
+      } catch (err) {
+        setStatus(`Replay failed: ${err.message}`, 'err');
+      }
+    }
+
+    async function fetchRecentScreenshots(limitOverride, minutesOverride) {
+      const minutes = Number((minutesOverride ?? minutesEl.value) || 30);
+      const limit = Number((limitOverride ?? limitEl.value) || 50);
+      const res = await fetch(`/api/screenshots/recent?limit=${encodeURIComponent(limit)}&minutes=${encodeURIComponent(minutes)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return data.screenshots || [];
+    }
+
+    async function refreshScreenshots() {
+      try {
+        const screenshots = await fetchRecentScreenshots();
+        recentScreenshotsCache = screenshots;
+
+        summaryEl.textContent = `${screenshots.length} screenshot(s) | last update: ${new Date().toLocaleTimeString()}`;
+        shotsEl.innerHTML = screenshots.map(card).join('') || '<div class="meta">No screenshots found in selected window.</div>';
+      } catch (err) {
+        setStatus(`Refresh error: ${err.message}`, 'err');
+      }
+    }
+
+    function getFallbackScreenshotsByAlertId() {
+      const byAlertId = new Map();
+      for (const s of recentScreenshotsCache) {
+        if (!s?.alert_id) continue;
+        const key = String(s.alert_id);
+        if (!byAlertId.has(key)) byAlertId.set(key, []);
+        byAlertId.get(key).push(s);
+      }
+      return byAlertId;
+    }
+
+    function getAlertRenderModels(alerts, byAlertId) {
+      return alerts.map((alert) => {
+        const id = String(alert?.id || '').trim();
+        const cached = alertMediaCache.get(id) || {};
+        const screenshots = Array.isArray(cached.screenshots) && cached.screenshots.length > 0
+          ? cached.screenshots
+          : (byAlertId.get(id) || []);
+        return {
+          alert,
+          screenshots,
+          videosInfo: cached.videosInfo || null,
+          ensure: cached.ensure || null
+        };
+      });
+    }
+
+    function renderAlertsFromModels(models) {
+      alertsEl.innerHTML = models.map((m) => alertCard(m.alert, m.screenshots, m.videosInfo, { ensure: m.ensure })).join('')
+        || '<div class="meta">No alerts found.</div>';
+    }
+
+    async function fetchAlertMedia(alertId, force = false) {
+      const id = String(alertId || '').trim();
+      if (!id) return null;
+
+      const cached = alertMediaCache.get(id);
+      const now = Date.now();
+      if (!force && cached && cached.fetchedAt && !cached.pendingPromise) {
+        const age = now - cached.fetchedAt;
+        const ttl = cached.ready ? ALERT_MEDIA_TTL_MS : ALERT_MEDIA_PENDING_TTL_MS;
+        if (age < ttl) return cached;
+      }
+      if (cached?.pendingPromise) {
+        return cached.pendingPromise;
+      }
+
+      const pendingPromise = (async () => {
+        let screenshots = Array.isArray(cached?.screenshots) ? cached.screenshots : [];
+        let videosInfo = cached?.videosInfo || null;
+        let error = '';
+
+        let ensure = cached?.ensure || null;
+        try {
+          const res = await fetch(`/api/alerts/${encodeURIComponent(id)}/media?ensureMedia=true`, { cache: 'no-store' });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok || !body?.success) {
+            error = body?.message || `media:${res.status}`;
+          } else {
+            const payload = body?.data || {};
+            const fromMedia = payload?.screenshots;
+            if (Array.isArray(fromMedia)) {
+              screenshots = fromMedia.map((s) => ({
+                id: s.id,
+                device_id: s.vehicleId || s.device_id,
+                channel: s.channel,
+                storage_url: s.url || s.storage_url,
+                file_size: s.fileSize || s.file_size,
+                timestamp: s.timestamp,
+                alert_id: s.alertId || s.alert_id
+              }));
+            }
+            videosInfo = {
+              success: true,
+              videos: {
+                pre_event: {
+                  path: payload?.clipUrls?.preRaw || '',
+                  duration: Number(payload?.alert?.metadata?.videoClips?.preDuration || 0)
+                },
+                post_event: {
+                  path: payload?.clipUrls?.postRaw || '',
+                  duration: Number(payload?.alert?.metadata?.videoClips?.postDuration || 0)
+                },
+                camera_sd: {
+                  path: payload?.clipUrls?.camera || ''
+                },
+                database_records: Array.isArray(payload?.videos) ? payload.videos : []
+              },
+              has_pre_event: !!(payload?.alert?.metadata?.videoClips?.pre || payload?.alert?.metadata?.videoClips?.preStorageUrl),
+              has_post_event: !!(payload?.alert?.metadata?.videoClips?.post || payload?.alert?.metadata?.videoClips?.postStorageUrl),
+              has_camera_video: !!(
+                payload?.alert?.metadata?.videoClips?.cameraVideo ||
+                payload?.alert?.metadata?.videoClips?.cameraPreVideo ||
+                payload?.alert?.metadata?.videoClips?.cameraPostVideo
+              )
+            };
+            ensure = payload?.ensure || null;
+          }
+        } catch (e) {
+          error = e?.message || 'media fetch failed';
+        }
+
+        const next = {
+          screenshots,
+          videosInfo,
+          ensure,
+          fetchedAt: Date.now(),
+          error,
+          ready: isAlertMediaReady({ id }, { screenshots, videosInfo })
+        };
+        alertMediaCache.set(id, next);
+        return next;
+      })().catch((err) => {
+        const next = {
+          screenshots: Array.isArray(cached?.screenshots) ? cached.screenshots : [],
+          videosInfo: cached?.videosInfo || null,
+          fetchedAt: Date.now(),
+          error: err?.message || String(err),
+          ready: false
+        };
+        alertMediaCache.set(id, next);
+        return next;
+      });
+
+      alertMediaCache.set(id, {
+        ...(cached || {}),
+        pendingPromise
+      });
+      return pendingPromise;
+    }
+
+    async function hydrateAlertsMedia(alerts, force = false) {
+      const ids = alerts
+        .map((a) => String(a?.id || '').trim())
+        .filter(Boolean);
+      if (ids.length === 0) return;
+
+      let idx = 0;
+      const workerCount = Math.min(ALERT_MEDIA_FETCH_CONCURRENCY, ids.length);
+      const workers = Array.from({ length: workerCount }, async () => {
+        while (idx < ids.length) {
+          const currentIndex = idx++;
+          const id = ids[currentIndex];
+          await fetchAlertMedia(id, force);
+        }
+      });
+      await Promise.all(workers);
+    }
+
+    async function refreshAlerts() {
+      if (alertRefreshInFlight) return;
+      alertRefreshInFlight = true;
+      try {
+        const limit = Math.max(10, Math.min(ALERT_FETCH_LIMIT_MAX, Number(limitEl.value || ALERT_FETCH_LIMIT_DEFAULT)));
+        const minutes = Math.max(1, Math.min(10080, Number(minutesEl.value || 30)));
+        const vehicleFilter = String(vehicleIdEl.value || '').trim();
+        const mediaHydrateLimit = Math.min(limit, ALERT_MEDIA_HYDRATE_LIMIT_MAX);
+        const screenshotLimit = Math.max(100, Math.min(600, limit * 3));
+
+        try {
+          recentScreenshotsCache = await fetchRecentScreenshots(screenshotLimit, minutes);
+        } catch (_) {
+          recentScreenshotsCache = [];
+        }
+
+        let alerts = [];
+        try {
+          const res = await fetch(`/api/alerts/active?limit=${encodeURIComponent(limit)}&minutes=${encodeURIComponent(minutes)}`, { cache: 'no-store' });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json().catch(() => ({}));
+          alerts = Array.isArray(data.alerts) ? data.alerts.filter((a) => matchesSourceFilter(a) && matchesAlertTypeFilter(a)) : [];
+        } catch (_) {
+          alerts = [];
+        }
+
+        if (alerts.length === 0) {
+          try {
+            const res = await fetch(`/api/alerts?limit=${encodeURIComponent(limit)}&minutes=${encodeURIComponent(minutes)}`, { cache: 'no-store' });
+            if (res.ok) {
+              const data = await res.json().catch(() => ({}));
+              alerts = Array.isArray(data.alerts) ? data.alerts.filter((a) => matchesSourceFilter(a) && matchesAlertTypeFilter(a)) : [];
+            }
+          } catch (_) {}
+        }
+
+        mergeLiveAlertStore(alerts);
+        alerts = getLiveAlerts(limit, minutes, vehicleFilter);
+
+        const byAlertId = getFallbackScreenshotsByAlertId();
+        const initialModels = getAlertRenderModels(alerts, byAlertId);
+        renderAlertsFromModels(initialModels);
+
+        const priorityAlerts = alerts.slice(0, mediaHydrateLimit);
+        await hydrateAlertsMedia(priorityAlerts);
+        const hydratedModels = getAlertRenderModels(alerts, byAlertId);
+
+        let autoRequestedCount = 0;
+        if (AUTO_MEDIA_REQUESTS_ENABLED) {
+          for (const model of hydratedModels) {
+            if (autoRequestedCount >= AUTO_VIDEO_REQUEST_MAX_PER_REFRESH) break;
+            await ensureAlertScreenshotRequested(model.alert, model.screenshots);
+            const requested = await ensureAlertVideoRequested(model.alert, model.videosInfo);
+            if (requested) autoRequestedCount += 1;
+          }
+        }
+
+        renderAlertsFromModels(hydratedModels);
+        const withAnyScreenshots = hydratedModels.filter((m) => (m.screenshots || []).length > 0).length;
+        const withAnyVideos = hydratedModels.filter((m) => {
+          const info = getAlertVideoInfo(m.alert, m.videosInfo);
+          return info.preReady || info.postReady || info.cameraReady;
+        }).length;
+        const nowText = new Date().toLocaleTimeString();
+        const sourceLabel = alertsWsConnected ? 'source: live websocket' : 'source: api fallback';
+        summaryEl.textContent = `${alerts.length} alert(s) | with screenshots: ${withAnyScreenshots} | with video: ${withAnyVideos} | ${sourceLabel} | last update: ${nowText}${autoRequestedCount ? ` | video requests started: ${autoRequestedCount}` : ''}`;
+      } catch (err) {
+        setStatus(`Alert refresh error: ${err.message}`, 'err');
+        const fallbackAlerts = getLiveAlerts(
+          Math.max(10, Math.min(ALERT_FETCH_LIMIT_MAX, Number(limitEl.value || ALERT_FETCH_LIMIT_DEFAULT))),
+          Math.max(1, Math.min(10080, Number(minutesEl.value || 30))),
+          String(vehicleIdEl.value || '').trim()
+        );
+        const byAlertId = getFallbackScreenshotsByAlertId();
+        const models = getAlertRenderModels(fallbackAlerts, byAlertId);
+        renderAlertsFromModels(models);
+        if (fallbackAlerts.length === 0) {
+          alertsEl.innerHTML = '<div class="meta">Failed to load alerts. Check API connectivity.</div>';
+        }
+      } finally {
+        alertRefreshInFlight = false;
+      }
+    }
+
+    async function refreshCurrentTab() {
+      if (activeTab === 'alerts') {
+        await refreshAlerts();
+      } else if (activeTab === 'video') {
+        summaryEl.textContent = 'Submit an arbitrary time range request to retrieve camera video.';
+      } else {
+        await refreshScreenshots();
+      }
+    }
+
+    async function requestScreenshot() {
+      const vehicleId = vehicleIdEl.value.trim();
+      const channel = Number(channelEl.value || 1);
+
+      if (!vehicleId) {
+        setStatus('Vehicle ID is required.', 'warn');
+        return;
+      }
+
+      setStatus(`Requesting screenshot for ${vehicleId} channel ${channel}...`);
+
+      try {
+        const res = await fetch(`/api/vehicles/${encodeURIComponent(vehicleId)}/screenshot`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel, fallback: true })
+        });
+        const body = await res.json();
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+        setStatus(body.message || 'Screenshot request sent.', 'ok');
+        setTimeout(refreshScreenshots, 1500);
+      } catch (err) {
+        setStatus(`Request failed: ${err.message}`, 'err');
+      }
+    }
+
+    async function simulateAlert() {
+      const vehicleId = vehicleIdEl.value.trim();
+      const signalCode = String(simulateSignalEl.value || '').trim();
+      const channel = Number(simulateChannelEl.value || channelEl.value || 1);
+
+      if (!vehicleId) {
+        setStatus('Vehicle ID is required before simulating an alert.', 'warn');
+        return;
+      }
+      if (!signalCode) {
+        setStatus('Select an alert to simulate.', 'warn');
+        return;
+      }
+
+      setStatus(`Simulating ${signalCode} for ${vehicleId} channel ${channel}...`);
+
+      try {
+        const res = await fetch('/api/test/simulate-alert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehicleId, channel, signalCode })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success) {
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+        setStatus(body.message || 'Alert simulated.', 'ok');
+        scheduleAlertsRefresh(200);
+        setTimeout(refreshCurrentTab, 1200);
+      } catch (err) {
+        setStatus(`Simulate alert failed: ${err.message}`, 'err');
+      }
+    }
+
+    async function requestAllScreenshots(silent = false) {
+      setStatus('Loading connected vehicles and channels...');
+      try {
+        const res = await fetch('/api/vehicles/connected');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const vehicles = await res.json();
+
+        if (!Array.isArray(vehicles) || vehicles.length === 0) {
+          setStatus('No connected vehicles found.', 'warn');
+          return;
+        }
+
+        const jobs = [];
+        for (const v of vehicles) {
+          const channels = extractVideoChannels(v, 1);
+          const effectiveChannels = channels.length ? channels : [1];
+          for (const ch of effectiveChannels) {
+            jobs.push({
+              vehicleId: String(v.id),
+              channel: ch
+            });
+          }
+        }
+
+        if (jobs.length === 0) {
+          setStatus('No valid vehicle/channel targets found.', 'warn');
+          return;
+        }
+
+        if (!silent) {
+          setStatus(`Requesting ${jobs.length} screenshots in parallel...`);
+        }
+
+        const results = await Promise.allSettled(
+          jobs.map(job =>
+            fetch(`/api/vehicles/${encodeURIComponent(job.vehicleId)}/screenshot`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ channel: job.channel, fallback: true })
+            }).then(async r => {
+              const body = await r.json().catch(() => ({}));
+              if (!r.ok || !body.success) {
+                throw new Error(body.message || `HTTP ${r.status}`);
+              }
+              return job;
+            })
+          )
+        );
+
+        const ok = results.filter(r => r.status === 'fulfilled').length;
+        const fail = results.length - ok;
+        if (!silent) {
+          setStatus(`All-request complete: ${ok} success, ${fail} failed.`, fail ? 'warn' : 'ok');
+        } else {
+          setStatus(`30s auto-capture: ${ok} success, ${fail} failed.`, fail ? 'warn' : 'ok');
+        }
+        setTimeout(refreshCurrentTab, 1500);
+      } catch (err) {
+        setStatus(`All-request failed: ${err.message}`, 'err');
+      }
+    }
+
+    function startAutoRefresh() {
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => {
+        if (autoRefresh) refreshCurrentTab();
+      }, 5000);
+    }
+
+    function startAutoCapture() {
+      if (captureTimer) clearInterval(captureTimer);
+      captureTimer = setInterval(() => {
+        if (autoCapture) {
+          requestAllScreenshots(true);
+        }
+      }, 30000);
+    }
+
+    async function checkForNewAlerts() {
+      if (alertsWsConnected) return;
+      try {
+        const res = await fetch('/api/alerts/active');
+        if (!res.ok) return;
+        const data = await res.json();
+        mergeLiveAlertStore(Array.isArray(data?.alerts) ? data.alerts : []);
+        const currentCount = Number(data.count || 0);
+
+        if (lastAlertCount === null) {
+          lastAlertCount = currentCount;
+          return;
+        }
+
+        if (currentCount > lastAlertCount) {
+          setStatus(`New alerts detected: +${currentCount - lastAlertCount} (active: ${currentCount}).`, 'warn');
+          scheduleAlertsRefresh(100);
+        } else if (activeTab === 'alerts' && currentCount !== lastAlertCount) {
+          scheduleAlertsRefresh(100);
+        }
+
+        lastAlertCount = currentCount;
+      } catch (_) {
+        // Keep silent for periodic background check
+      }
+    }
+
+    function startAlertCheck() {
+      if (alertCheckTimer) clearInterval(alertCheckTimer);
+      alertCheckTimer = setInterval(() => {
+        if (autoRefresh) {
+          checkForNewAlerts();
+        }
+      }, 30000);
+    }
+
+    function connectWebSocket() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${location.host}/ws/alerts`);
+
+      ws.onopen = () => {
+        alertsWsConnected = true;
+        wsStatusEl.textContent = 'WebSocket: connected';
+      };
+      ws.onclose = () => {
+        alertsWsConnected = false;
+        wsStatusEl.textContent = 'WebSocket: disconnected (retrying)';
+        setTimeout(connectWebSocket, 2000);
+      };
+      ws.onerror = () => {
+        alertsWsConnected = false;
+        wsStatusEl.textContent = 'WebSocket: error';
+      };
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          const type = String(msg?.type || '').toLowerCase();
+          if (type === 'active_alerts_snapshot') {
+            const snapshot = Array.isArray(msg?.data) ? msg.data : [];
+            replaceLiveAlertStore(snapshot);
+            scheduleAlertsRefresh(50);
+            return;
+          }
+          if (type === 'new_alert' || type === 'alert-video-complete' || type === 'alert-updated') {
+            if (msg?.data && typeof msg.data === 'object') {
+              upsertLiveAlert(msg.data);
+              const alertId = String(msg.data.id || '').trim();
+              if (alertId) alertMediaCache.delete(alertId);
+            }
+            scheduleAlertsRefresh(50);
+            return;
+          }
+          if (type === 'alert_acknowledged' || type === 'alert_escalated' || type === 'alert_resolved') {
+            if (msg?.data && typeof msg.data === 'object') {
+              upsertLiveAlert(msg.data);
+              const alertId = String(msg.data.id || '').trim();
+              if (alertId) alertMediaCache.delete(alertId);
+            }
+            scheduleAlertsRefresh(80);
+            return;
+          }
+          if (type === 'screenshot-received') {
+            if (activeTab === 'alerts') {
+              scheduleAlertsRefresh(120);
+            } else {
+              refreshScreenshots();
+            }
+          }
+        } catch (_) {}
+      };
+    }
+
+    function setTab(tab) {
+      activeTab = tab;
+      const isAlerts = tab === 'alerts';
+      const isVideo = tab === 'video';
+      const isScreenshots = tab === 'screenshots';
+
+      tabAlertsEl.classList.toggle('active', isAlerts);
+      tabScreenshotsEl.classList.toggle('active', isScreenshots);
+      tabVideoEl.classList.toggle('active', isVideo);
+
+      paneAlertsEl.classList.toggle('active', isAlerts);
+      paneScreenshotsEl.classList.toggle('active', isScreenshots);
+      paneVideoEl.classList.toggle('active', isVideo);
+
+      panelTitleEl.textContent = isAlerts
+        ? 'Active Alerts + Linked Screenshots'
+        : isVideo
+          ? 'Video Retrieval'
+          : 'Recent Screenshots';
+      refreshCurrentTab();
+    }
+
+    document.getElementById('requestBtn').addEventListener('click', requestScreenshot);
+    document.getElementById('simulateBtn').addEventListener('click', simulateAlert);
+    document.getElementById('requestAllBtn').addEventListener('click', requestAllScreenshots);
+    document.getElementById('refreshBtn').addEventListener('click', refreshCurrentTab);
+    document.getElementById('loadVehiclesBtn').addEventListener('click', loadVehicles);
+    alertSourceFilterEl.addEventListener('change', () => scheduleAlertsRefresh(50));
+    alertTypeFilterEl.addEventListener('change', () => scheduleAlertsRefresh(50));
+    document.getElementById('toggleAutoBtn').addEventListener('click', (e) => {
+      autoRefresh = !autoRefresh;
+      e.target.textContent = autoRefresh ? 'Pause Auto Refresh' : 'Resume Auto Refresh';
+      setStatus(`Auto refresh ${autoRefresh ? 'enabled' : 'paused'}.`, 'ok');
+    });
+    document.getElementById('toggleAutoCaptureBtn').addEventListener('click', (e) => {
+      autoCapture = !autoCapture;
+      e.target.textContent = autoCapture ? 'Pause 30s Auto Capture' : 'Resume 30s Auto Capture';
+      setStatus(`30s auto capture ${autoCapture ? 'enabled' : 'paused'}.`, 'ok');
+    });
+    tabScreenshotsEl.addEventListener('click', () => setTab('screenshots'));
+    tabAlertsEl.addEventListener('click', () => setTab('alerts'));
+    tabVideoEl.addEventListener('click', () => setTab('video'));
+    document.getElementById('videoRequestBtn').addEventListener('click', requestVideoByRange);
+    document.getElementById('videoFillNowBtn').addEventListener('click', setDefaultVideoWindow);
+    document.getElementById('videoSearchBtn').addEventListener('click', searchVideoClips);
+    document.getElementById('videoLocalSearchBtn').addEventListener('click', searchLocalVideos);
+    document.getElementById('videoReplayBtn').addEventListener('click', replayLocalRange);
+    document.getElementById('videoRefreshJobsBtn').addEventListener('click', refreshVideoJobs);
+    document.getElementById('videoOpenViewerBtn').addEventListener('click', () => {
+      const vehicleId = (videoVehicleIdEl.value || vehicleIdEl.value || '').trim();
+      const channel = Number(videoChannelEl.value || 1);
+      const url = `/live-stream.html?vehicleId=${encodeURIComponent(vehicleId)}&channel=${encodeURIComponent(channel)}&autostart=1`;
+      window.open(url, '_blank');
+    });
+    videoClipListEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-stream-clip]');
+      if (!btn) return;
+      const start = btn.getAttribute('data-clip-start');
+      const end = btn.getAttribute('data-clip-end');
+      const ch = btn.getAttribute('data-clip-channel');
+      if (start) videoStartTimeEl.value = start.replace(' ', 'T').slice(0, 19);
+      if (end) videoEndTimeEl.value = end.replace(' ', 'T').slice(0, 19);
+      if (ch) videoChannelEl.value = String(Number(ch) || 1);
+      videoModeEl.value = 'stream';
+      setStatus(`Starting clip stream: ${start || ''} -> ${end || ''}`, 'ok');
+      requestVideoByRange();
+    });
+    videoSavedListEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-play-job]');
+      if (!btn) return;
+      const jobId = btn.getAttribute('data-play-job');
+      const jobStatus = btn.getAttribute('data-job-status') || '';
+      const fileUrl = btn.getAttribute('data-job-url');
+      if (fileUrl) {
+        videoReadyPlayerEl.src = fileUrl;
+        videoReadyPlayerEl.load();
+        setStatus('Loaded saved video in player.', 'ok');
+        return;
+      }
+      if (!jobId) return;
+      if (jobStatus === 'failed') {
+        setStatus(`Job ${jobId} failed. Check Job Status line for details.`, 'err');
+      } else {
+        setStatus(`Job ${jobId} is ${jobStatus || 'pending'}. Waiting for completion...`, 'warn');
+      }
+      pollVideoJob(jobId);
+    });
+    videoLocalListEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-play-local]');
+      if (btn) {
+        const fileUrl = btn.getAttribute('data-local-url');
+        if (!fileUrl) {
+          setStatus('No playback URL available for this recording.', 'warn');
+          return;
+        }
+        videoReadyPlayerEl.src = fileUrl;
+        videoReadyPlayerEl.load();
+        setStatus('Loaded local recording in player.', 'ok');
+        return;
+      }
+      const prep = e.target.closest('button[data-prepare-local]');
+      if (!prep) return;
+      const id = prep.getAttribute('data-prepare-local');
+      if (!id) return;
+      setStatus('Preparing MP4 for playback...', 'ok');
+      fetch(`/api/videos/${encodeURIComponent(id)}/prepare`, { method: 'POST' })
+        .then(() => {
+          setTimeout(searchLocalVideos, 1500);
+        })
+        .catch(() => {
+          setStatus('Failed to start prepare job.', 'warn');
+        });
+    });
+    alertsEl.addEventListener('click', (e) => {
+      const target = e.target.closest('button[data-request-video],button[data-open-videos],button[data-refresh-alert-video]');
+      if (!target) return;
+
+      const requestId = target.getAttribute('data-request-video');
+      if (requestId) {
+        requestAlertReportVideo(requestId);
+        return;
+      }
+
+      const refreshId = target.getAttribute('data-refresh-alert-video');
+      if (refreshId) {
+        refreshAlerts();
+        return;
+      }
+
+      const openId = target.getAttribute('data-open-videos');
+      if (openId) {
+        window.open(`/api/alerts/${encodeURIComponent(openId)}/videos`, '_blank');
+      }
+    });
+
+    loadVehicles();
+    setDefaultVideoWindow();
+    refreshVideoJobs();
+    setTab('alerts');
+    startAutoRefresh();
+    startAutoCapture();
+    startAlertCheck();
+    connectWebSocket();
+  </script>
+</body>
+</html>

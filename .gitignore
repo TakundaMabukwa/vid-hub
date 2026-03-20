@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+recordings/
+media/
+hls/
+logs/
+*.log
+alerts.json
+t.json
+.DS_Store
+.md
