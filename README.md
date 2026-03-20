@@ -2,25 +2,51 @@
 
 # Video Worker
 
-This node receives RTP packets from the listener and runs:
+This node owns everything video-related:
 
 - RTP parsing
 - frame assembly
+- live stream
 - HLS/video writing
-- stream/replay related work
+- replay and playback
+- recordings and video-side storage
 
-Deploy steps:
+## Port
 
-1. Copy repo to video worker server
-2. Configure `.env`
-3. Build:
+- `API_PORT=3200`
+
+## One-shot droplet setup
+
+On a fresh Ubuntu droplet:
 
 ```bash
-npm run build
+curl -fsSL https://raw.githubusercontent.com/TakundaMabukwa/vid-hub/main/bootstrap-droplet.sh -o bootstrap-droplet.sh
+chmod +x bootstrap-droplet.sh
+sudo ./bootstrap-droplet.sh
 ```
 
-4. Start with PM2:
+After that, edit:
 
 ```bash
-pm2 start ecosystem.config.js --update-env
+sudo nano /opt/vid-hub/.env
+```
+
+Set at least:
+
+- `SERVER_IP=<video-public-ip>`
+- `INTERNAL_WORKER_TOKEN=<shared-secret>`
+- `CORS_ORIGIN=*`
+
+Then restart:
+
+```bash
+cd /opt/vid-hub
+pm2 restart ecosystem.config.js --update-env
+pm2 logs video-video-worker --lines 100
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:3200/health
 ```

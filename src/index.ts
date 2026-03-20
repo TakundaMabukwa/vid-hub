@@ -156,6 +156,7 @@ const BACKGROUND_STREAM_INTERVAL_MS = parseInt(process.env.BACKGROUND_STREAM_INT
 const INGRESS_ENABLED = envFlag('INGRESS_ENABLED', true);
 const ALERT_PROCESSING_ENABLED = envFlag('ALERT_PROCESSING_ENABLED', true);
 const VIDEO_PROCESSING_ENABLED = envFlag('VIDEO_PROCESSING_ENABLED', true);
+const SHOULD_USE_DB = ALERT_PROCESSING_ENABLED || VIDEO_PROCESSING_ENABLED;
 const ALERT_WORKER_URL = process.env.ALERT_WORKER_URL || '';
 const VIDEO_WORKER_URL = process.env.VIDEO_WORKER_URL || '';
 const LISTENER_SERVER_URL = process.env.LISTENER_SERVER_URL || '';
@@ -164,13 +165,17 @@ const INTERNAL_WORKER_TOKEN = process.env.INTERNAL_WORKER_TOKEN || '';
 async function startServer() {
   console.log('Starting JT/T 1078 Video Ingestion Server...');
   
-  try {
-    await pool.query('SELECT NOW()');
-    await ensureRuntimeSchema();
-    console.log('Database connected successfully');
-  } catch (error) {
-    console.error('Database connection failed:', error);
-    process.exit(1);
+  if (SHOULD_USE_DB) {
+    try {
+      await pool.query('SELECT NOW()');
+      await ensureRuntimeSchema();
+      console.log('Database connected successfully');
+    } catch (error) {
+      console.error('Database connection failed:', error);
+      process.exit(1);
+    }
+  } else {
+    console.log('Database startup checks skipped for listener-only mode');
   }
   
   const tcpServer = new JTT808Server(TCP_PORT, UDP_PORT);
@@ -307,12 +312,15 @@ async function startServer() {
   );
   
   app.use('/api', createRoutes(tcpServer, udpServer, replayService));
-  app.use('/api/alerts', createAlertRoutes());
+  if (ALERT_PROCESSING_ENABLED) {
+    app.use('/api/alerts', createAlertRoutes());
+  }
   app.use('/api/internal', createInternalRoutes(alertManager, tcpRTPHandler, tcpServer));
   
   app.get('/health', (req, res) => {
-    const { getPoolStats } = require('./storage/database');
-    const dbStats = getPoolStats();
+    const dbStats = SHOULD_USE_DB
+      ? require('./storage/database').getPoolStats()
+      : null;
     
     res.json({
       status: 'healthy',
@@ -330,16 +338,25 @@ async function startServer() {
         videoWorkerUrl: VIDEO_WORKER_URL || null,
         listenerServerUrl: LISTENER_SERVER_URL || null
       },
-      database: {
+      database: SHOULD_USE_DB ? {
         pool: dbStats,
         warning: dbStats.waiting > 0 ? `${dbStats.waiting} queries waiting for a connection` : null,
         alert: dbStats.active > dbStats.max * 0.9 ? `Pool is ${Math.round((dbStats.active/dbStats.max)*100)}% utilized` : null
+      } : {
+        enabled: false
       }
     });
   });
   
   // Database pool status endpoint (for monitoring)
   app.get('/api/db/pool-status', (req, res) => {
+    if (!SHOULD_USE_DB) {
+      return res.json({
+        timestamp: new Date().toISOString(),
+        enabled: false,
+        message: 'Database disabled in listener-only mode'
+      });
+    }
     const { getPoolStats } = require('./storage/database');
     const stats = getPoolStats();
     
